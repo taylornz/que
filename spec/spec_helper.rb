@@ -49,6 +49,7 @@ DB = Sequel.connect(QUE_URL)
 # Reset the table to the most up-to-date version.
 DB.drop_table? :que_jobs
 DB.drop_table? :que_lockers
+DB.drop_schema :que_jobs_schema, if_exists: true, cascade: true
 DB.drop_function :que_job_notify, if_exists: true
 Que::Migrations.migrate!
 

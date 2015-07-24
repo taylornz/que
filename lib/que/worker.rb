@@ -23,7 +23,7 @@ module Que
         break unless pk = @job_queue.shift(*priority)
 
         begin
-          if job = Que.execute(:get_job, pk).first
+          if job = Que.execute(SQL.get_job(table: :que_jobs), pk).first
             klass = Job.class_for(job[:job_class])
             instance = klass.new(job)
 
@@ -41,7 +41,7 @@ module Que
             interval = (klass.retry_interval if klass && klass.respond_to?(:retry_interval)) || Job.retry_interval
             delay    = interval.respond_to?(:call) ? interval.call(count) : interval
             message  = "#{error.message}\n#{error.backtrace.join("\n")}"
-            Que.execute :set_error, [count, delay, message] + job.values_at(:priority, :run_at, :job_id)
+            Que.execute SQL.set_error(table: :que_jobs), [count, delay, message] + job.values_at(:priority, :run_at, :job_id)
           rescue
             # If we can't reach the database for some reason, too bad, but
             # don't let it crash the work loop.

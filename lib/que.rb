@@ -87,12 +87,12 @@ module Que
       execute "DELETE FROM que_jobs"
     end
 
-    def job_stats
-      execute :job_stats
+    def job_stats(table: :que_jobs)
+      execute SQL.job_stats(table: table)
     end
 
-    def job_states
-      execute :job_states
+    def job_states(table: :que_jobs)
+      execute SQL.job_states(table: table)
     end
 
     # Have to support create! and drop! in old migrations. They just created
@@ -125,6 +125,26 @@ module Que
 
     def log_formatter
       @log_formatter ||= JSON_MODULE.method(:dump)
+    end
+
+    def create_job_queue!(name)
+      execute <<-SQL
+        CREATE TABLE #{name}
+        (
+          priority smallint NOT NULL DEFAULT 100,
+          run_at timestamp with time zone NOT NULL DEFAULT now(),
+          job_id bigserial NOT NULL,
+          job_class text NOT NULL,
+          args json NOT NULL DEFAULT '[]'::json,
+          error_count integer NOT NULL DEFAULT 0,
+          last_error text,
+          CONSTRAINT "#{name}_pkey" PRIMARY KEY (priority, run_at, job_id)
+        );
+
+        COMMENT ON TABLE #{name} IS '4';
+
+        CREATE TRIGGER que_job_notify AFTER INSERT ON #{name} FOR EACH ROW EXECUTE PROCEDURE que_job_notify();
+      SQL
     end
 
     # A helper method to manage transactions, used mainly by the migration

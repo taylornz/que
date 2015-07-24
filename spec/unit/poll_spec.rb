@@ -4,7 +4,7 @@ describe "The job polling query" do
   def poll(count, options = {})
     job_ids = options[:job_ids] || []
 
-    jobs = Que.execute :poll_jobs, ["{#{job_ids.join(',')}}", count]
+    jobs = Que.execute Que::SQL.poll_jobs(table: :que_jobs), ["{#{job_ids.join(',')}}", count]
 
     returned_job_ids = jobs.map { |j| j[:job_id] }
 

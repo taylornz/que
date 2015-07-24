@@ -101,7 +101,7 @@ module Que
 
     def poll
       count = @job_queue.space
-      jobs  = execute :poll_jobs, ["{#{@locks.to_a.join(',')}}", count]
+      jobs  = execute SQL.poll_jobs(table: :que_jobs), ["{#{@locks.to_a.join(',')}}", count]
 
       @locks.merge jobs.map { |job| job[:job_id] }
       push_jobs jobs.map { |job| job.values_at(:priority, :run_at, :job_id) }

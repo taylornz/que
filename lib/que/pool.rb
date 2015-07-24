@@ -14,7 +14,7 @@ module Que
 
     def execute(command, params = [])
       sql = case command
-            when Symbol then SQL[command] || raise(Error, "Bad command! #{command.inspect}")
+            when Symbol then SQL::STATEMENTS[command] || raise(Error, "Bad command! #{command.inspect}")
             when String then command
             else raise(Error, "Bad command! #{command.inspect}")
             end

@@ -41,7 +41,7 @@ module Que
       new_args = args.unshift(recurring_interval: [@_end_time, @_end_time + interval])
       next_run_time = Time.at(end_time + interval)
 
-      Que.execute :reenqueue_job, attrs.values_at(:priority, :run_at, :job_id, :job_class) << next_run_time << new_args
+      Que.execute SQL.reenqueue_job(table: :que_jobs), attrs.values_at(:priority, :run_at, :job_id, :job_class) << next_run_time << new_args
       @reenqueued = true
     end
 

@@ -19,7 +19,7 @@ module Que
     private
 
     def destroy
-      Que.execute :destroy_job, attrs.values_at(:priority, :run_at, :job_id)
+      Que.execute SQL.destroy_job(table: :que_jobs), attrs.values_at(:priority, :run_at, :job_id)
       @destroyed = true
     end
 
@@ -28,7 +28,7 @@ module Que
     class << self
       attr_reader :retry_interval
 
-      def enqueue(*args, job_class: nil, run_at: nil, priority: nil, **arg_opts)
+      def enqueue(*args, job_class: nil, run_at: nil, priority: nil, job_queue: :que_jobs, **arg_opts)
         args << arg_opts if arg_opts.any?
         attrs = {job_class: job_class || to_s, args: args}
 
@@ -43,7 +43,7 @@ module Que
         if Que.mode == :sync && !t
           run(*attrs[:args])
         else
-          values = Que.execute(:insert_job, attrs.values_at(:priority, :run_at, :job_class, :args)).first
+          values = Que.execute(SQL.insert_job(table: job_queue), attrs.values_at(:priority, :run_at, :job_class, :args)).first
           new(values)
         end
       end

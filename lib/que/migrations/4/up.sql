@@ -3,6 +3,10 @@ ALTER TABLE que_jobs
   DROP COLUMN queue,
   ADD CONSTRAINT que_jobs_pkey PRIMARY KEY (priority, run_at, job_id);
 
+-- The job_id sequence can now be shared by multiple job queues (multiple
+-- tables), so disassociate it from que_jobs.
+ALTER SEQUENCE que_jobs_job_id_seq OWNED BY NONE;
+
 CREATE UNLOGGED TABLE que_lockers (
   pid           integer NOT NULL CONSTRAINT que_lockers_pkey PRIMARY KEY,
   worker_count  integer NOT NULL,
@@ -35,7 +39,7 @@ CREATE FUNCTION que_job_notify() RETURNS trigger AS $$
         SELECT *, row_number() OVER () - 1 AS row_number
         FROM (
           SELECT *
-          FROM que_lockers ql, generate_series(1, ql.worker_count) AS id
+          FROM public.que_lockers ql, generate_series(1, ql.worker_count) AS id
           WHERE listening
           ORDER BY md5(pid::text || id::text)
         ) t1
