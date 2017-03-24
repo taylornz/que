@@ -276,7 +276,7 @@ describe Que::Locker do
       # Use a transaction to make sure that the locker is able to see all of
       # these jobs at the same time.
       ids +=
-        DB.transaction do
+        Que.transaction do
           6.times.map do
             Que::Job.enqueue(priority: 101).attrs[:job_id]
           end
@@ -302,7 +302,7 @@ describe Que::Locker do
           e['limit'] == 5 && e['locked'] == 5
         end
 
-      assert(second_mass_lock)
+      assert(second_mass_lock, "Didn't find a valid log message in: #{locker_polled_events.inspect}")
     end
 
     it "should trigger a new batch poll when the queue drops to the minimum_queue_size threshold" do
