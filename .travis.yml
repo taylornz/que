@@ -42,7 +42,10 @@ before_install:
   - sudo sed -i "s/port = ..../port = 5435/g" /etc/postgresql/9.6/main/postgresql.conf
 
   # Start up the Postgres instances we care about.
-  - sudo /etc/init.d/postgresql start 9.3 9.4 9.5 9.6
+  - sudo /etc/init.d/postgresql start 9.3
+  - sudo /etc/init.d/postgresql start 9.4
+  - sudo /etc/init.d/postgresql start 9.5
+  - sudo /etc/init.d/postgresql start 9.6
 
   # 9.6 won't have a travis user, so create one.
   - sudo -u postgres createuser -p 5435 -S -D -R travis
