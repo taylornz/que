@@ -45,7 +45,7 @@ before_install:
   - sudo /etc/init.d/postgresql start 9.3 9.4 9.5 9.6
 
   # 9.6 won't have a travis user, so create one.
-  - sudo -u postgres createuser -p 5435 travis
+  - sudo -u postgres createuser -p 5435 -S -D -R travis
 
 before_script:
   - psql -c 'create database "que-test"' -U postgres -p 5432
