@@ -2,25 +2,25 @@ language: ruby
 cache: bundler
 
 rvm:
-  - 2.2
-  - 2.3
+  # - 2.2
+  # - 2.3
   - 2.4.0
-  - ruby-head
+  # - ruby-head
   # The Rubinii aren't installing properly on Travis :/
   # - rbx-2
   # - rbx
 
-matrix:
-  allow_failures:
-    # Ruby head failures aren't disastrous, because we won't support it until
-    # it's released, but it's good to be aware of.
-    - rvm: ruby-head
+# matrix:
+#   allow_failures:
+#     # Ruby head failures aren't disastrous, because we won't support it until
+#     # it's released, but it's good to be aware of.
+#     - rvm: ruby-head
 
 gemfile:
   - spec/gemfiles/Gemfile.current
   - spec/gemfiles/Gemfile.old
-  - spec/gemfiles/Gemfile.older
-  - spec/gemfiles/Gemfile.oldest
+  # - spec/gemfiles/Gemfile.older
+  # - spec/gemfiles/Gemfile.oldest
 
 env:
   - PG_VERSION=9.3
@@ -32,29 +32,49 @@ before_install:
   # Stop all running Postgreses, so we don't get port conflicts when installing
   # a new version.
   - sudo /etc/init.d/postgresql stop
-  # Install whatever version we're using.
-  - sudo apt-get install postgresql-$PG_VERSION
-  # If we just installed Postgres 9.6 it won't have a proper pg_hba set up, so...
+
+  # Make sure that all the Postgres versions we care about are installed.
+  - sudo apt-get install postgresql-9.3 postgresql-9.4 postgresql-9.5 postgresql-9.6
+
+  # Postgres 9.6 won't have a proper pg_hba set up, so...
   - sudo mkdir -p /etc/postgresql/9.6/main
   - sudo cp -v /etc/postgresql/9.{5,6}/main/pg_hba.conf
-  # Hook up the Postgres version we care about to the right port.
-  - sudo sed -i "s/port = ..../port = 5432/g" /etc/postgresql/$PG_VERSION/main/postgresql.conf
+
+  # Hook up the various Postgres versions to specific ports.
+  - sudo sed -i "s/port = ..../port = 5432/g" /etc/postgresql/9.3/main/postgresql.conf
+  - sudo sed -i "s/port = ..../port = 5433/g" /etc/postgresql/9.4/main/postgresql.conf
+  - sudo sed -i "s/port = ..../port = 5434/g" /etc/postgresql/9.5/main/postgresql.conf
+  - sudo sed -i "s/port = ..../port = 5435/g" /etc/postgresql/9.6/main/postgresql.conf
+
   # If we just installed a new Postgres version it'll be running, so make sure
-  # they're all stopped, again.
+  # they're all stopped, again, then start up the ones we care about.
   - sudo /etc/init.d/postgresql stop
-  # Start up the one we care about.
-  - sudo /etc/init.d/postgresql start $PG_VERSION
+  - sudo /etc/init.d/postgresql start 9.3 9.4 9.5 9.6
+
   # A newly-installed Postgres won't have a travis user, so create one. But, if
   # one already exists this will fail, so drop it first. Kinda stupid.
   - sudo -u postgres dropuser --if-exists -p 5432 travis &>/dev/null
+  - sudo -u postgres dropuser --if-exists -p 5433 travis &>/dev/null
+  - sudo -u postgres dropuser --if-exists -p 5434 travis &>/dev/null
+  - sudo -u postgres dropuser --if-exists -p 5435 travis &>/dev/null
+
   - sudo -u postgres createuser -p 5432 travis &>/dev/null
+  - sudo -u postgres createuser -p 5433 travis &>/dev/null
+  - sudo -u postgres createuser -p 5434 travis &>/dev/null
+  - sudo -u postgres createuser -p 5435 travis &>/dev/null
 
 before_script:
-  - psql -c 'create database "que-test"' -U postgres
+  - psql -c 'create database "que-test"' -U postgres -p 5432
+  - psql -c 'create database "que-test"' -U postgres -p 5433
+  - psql -c 'create database "que-test"' -U postgres -p 5434
+  - psql -c 'create database "que-test"' -U postgres -p 5435
 
 script:
-  # Run the complete test suite:
-  - bundle exec rake
+  # Run the complete test suite for each Postgres version:
+  - DATABASE_URL=postgres://postgres:@localhost:5432/que-test bundle exec rake
+  - DATABASE_URL=postgres://postgres:@localhost:5433/que-test bundle exec rake
+  - DATABASE_URL=postgres://postgres:@localhost:5434/que-test bundle exec rake
+  - DATABASE_URL=postgres://postgres:@localhost:5435/que-test bundle exec rake
 
 notifications:
   email: false
