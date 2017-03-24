@@ -22,19 +22,13 @@ gemfile:
   # - spec/gemfiles/Gemfile.older
   # - spec/gemfiles/Gemfile.oldest
 
-env:
-  - PG_VERSION=9.3
-  - PG_VERSION=9.4
-  - PG_VERSION=9.5
-  - PG_VERSION=9.6
-
 before_install:
   # Stop all running Postgreses, so we don't get port conflicts when installing
   # a new version.
   - sudo /etc/init.d/postgresql stop
 
   # Make sure that all the Postgres versions we care about are installed.
-  - sudo apt-get install postgresql-9.3 postgresql-9.4 postgresql-9.5 postgresql-9.6
+  - sudo apt-get install postgresql-9.6
 
   # Postgres 9.6 won't have a proper pg_hba set up, so...
   - sudo mkdir -p /etc/postgresql/9.6/main
