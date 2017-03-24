@@ -27,8 +27,9 @@ before_install:
   # a new version.
   - sudo /etc/init.d/postgresql stop
 
-  # Make sure that all the Postgres versions we care about are installed.
+  # Make sure that 9.6 is installed, and stop it if it was just started.
   - sudo apt-get install postgresql-9.6
+  - sudo /etc/init.d/postgresql stop
 
   # Postgres 9.6 won't have a proper pg_hba set up, so...
   - sudo mkdir -p /etc/postgresql/9.6/main
@@ -40,22 +41,11 @@ before_install:
   - sudo sed -i "s/port = ..../port = 5434/g" /etc/postgresql/9.5/main/postgresql.conf
   - sudo sed -i "s/port = ..../port = 5435/g" /etc/postgresql/9.6/main/postgresql.conf
 
-  # If we just installed a new Postgres version it'll be running, so make sure
-  # they're all stopped, again, then start up the ones we care about.
-  - sudo /etc/init.d/postgresql stop
+  # Start up the Postgres instances we care about.
   - sudo /etc/init.d/postgresql start 9.3 9.4 9.5 9.6
 
-  # A newly-installed Postgres won't have a travis user, so create one. But, if
-  # one already exists this will fail, so drop it first. Kinda stupid.
-  - sudo -u postgres dropuser --if-exists -p 5432 travis &>/dev/null
-  - sudo -u postgres dropuser --if-exists -p 5433 travis &>/dev/null
-  - sudo -u postgres dropuser --if-exists -p 5434 travis &>/dev/null
-  - sudo -u postgres dropuser --if-exists -p 5435 travis &>/dev/null
-
-  - sudo -u postgres createuser -p 5432 travis &>/dev/null
-  - sudo -u postgres createuser -p 5433 travis &>/dev/null
-  - sudo -u postgres createuser -p 5434 travis &>/dev/null
-  - sudo -u postgres createuser -p 5435 travis &>/dev/null
+  # 9.6 won't have a travis user, so create one.
+  - sudo -u postgres createuser -p 5435 travis
 
 before_script:
   - psql -c 'create database "que-test"' -U postgres -p 5432
